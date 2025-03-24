@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Chat com IA{% endblock %}
+
+{% block content %}
+<div class="row">
+  <!-- SIDEBAR -->
+  <div class="col-lg-2 col-md-3 mb-3">
+    <div class="list-group">
+      <button class="list-group-item list-group-item-action text-primary text-center fw-bold" data-bs-toggle="modal" data-bs-target="#newChatModal">
+        + Nova Conversa
+      </button>
+      {% for conv in conversations %}
+        <div class="list-group-item d-flex justify-content-between align-items-center {% if conversation.id == conv.id %}active text-white{% endif %}">
+          <a href="{% url 'chat' conv.id %}" class="{% if conversation.id == conv.id %}text-white{% else %}text-dark{% endif %} text-decoration-none flex-grow-1">
+            {{ conv.title|truncatechars:25 }}
+          </a>
+          {% if conversation %}
+            <button class="btn btn-sm btn-light ms-2" data-bs-toggle="modal" data-bs-target="#editChatModal">
+              ⚙️
+            </button>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ÁREA DO CHAT -->
+  <div class="col-lg-9 col-md-9">
+    <div class="card shadow-sm">
+      <div id="chat-box" class="card-body" style="height: 65vh; overflow-y: auto;">
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="mb-3">
+              {% if msg.sender == 'user' %}
+                <div class="text-end">
+                  <span class="badge bg-primary">Você</span>
+                  <div class="alert alert-primary d-inline-block" style="max-width: 75%;">{{ msg.text }}</div>
+                </div>
+              {% else %}
+                <div class="text-start">
+                  <span class="badge bg-success">IA</span>
+                  <div class="alert alert-success d-inline-block" style="max-width: 75%;">{{ msg.text }}</div>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted text-center">Comece a conversar com a IA!</p>
+        {% endif %}
+      </div>
+
+      <div class="card-footer">
+        <form id="chat-form" method="post">
+          {% csrf_token %}
+          <div class="input-group">
+            <textarea name="user_input" id="chat-input" class="form-control" placeholder="Digite sua mensagem..." rows="1" required></textarea>
+            <button class="btn btn-primary" type="submit">Enviar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Nova conversa -->
+<div class="modal fade" id="newChatModal" tabindex="-1" aria-labelledby="newChatModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="get" action="{% url 'chat_new' %}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nova Conversa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          Você deseja iniciar uma nova conversa?
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Começar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Renomear e excluir conversa -->
+{% if conversation %}
+<!-- MODAL: Renomear e excluir conversa -->
+<div class="modal fade" id="editChatModal" tabindex="-1" aria-labelledby="editChatModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- RENOMEAR -->
+      <form method="post" action="{% url 'chat_rename' conversation.id %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Conversa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <label for="new_title" class="form-label">Novo nome da conversa:</label>
+          <input type="text" name="new_title" id="new_title" class="form-control" value="{{ conversation.title }}" required>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+
+      <!-- EXCLUIR -->
+      <form method="post" action="{% url 'chat_delete' conversation.id %}" class="px-3 pb-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Tem certeza que deseja excluir esta conversa?')">
+          Excluir conversa
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+<!-- JS -->
+<script>
+  window.onload = () => {
+    const chatBox = document.getElementById("chat-box");
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+  };
+
+  const chatInput = document.getElementById("chat-input");
+  const chatForm = document.getElementById("chat-form");
+
+  chatInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      chatForm.submit();
+    }
+  });
+</script>
+{% endblock %}
