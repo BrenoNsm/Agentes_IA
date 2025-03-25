@@ -8,6 +8,7 @@ from core.database import get_chroma_client, get_or_create_collection
 import google.generativeai as genai
 from django.views.decorators.http import require_POST
 import os
+import markdown2
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -45,7 +46,8 @@ def chat_view(request, conversation_id=None):
         if user_input and conversation:
             models.Message.objects.create(conversation=conversation, sender='user', text=user_input)
             response = generate_response(user_input, model, collection, embedding_model)
-            models.Message.objects.create(conversation=conversation, sender='bot', text=response)
+            response_html = markdown2.markdown(response, extras=["fenced-code-blocks", "code-friendly"])
+            models.Message.objects.create(conversation=conversation, sender='bot', text=response_html)
 
             # título automático na primeira resposta
             if not conversation.auto_named and conversation.title == "Nova conversa":

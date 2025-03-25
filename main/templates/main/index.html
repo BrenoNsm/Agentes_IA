@@ -39,7 +39,7 @@
               {% else %}
                 <div class="text-start">
                   <span class="badge bg-success">IA</span>
-                  <div class="alert alert-success d-inline-block" style="max-width: 75%;">{{ msg.text }}</div>
+                  <div class="alert alert-success d-inline-block" style="max-width: 75%;">{{ msg.text|safe }}</div>
                 </div>
               {% endif %}
             </div>

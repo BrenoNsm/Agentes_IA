@@ -4,3 +4,4 @@ sentence-transformers
 dotenv
 numpy
 Django
+markdown2
