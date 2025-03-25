@@ -4,14 +4,14 @@
 {% block content %}
 <div class="row">
   <!-- SIDEBAR -->
-  <div class="col-lg-2 col-md-3 mb-3">
+  <div class="col-lg-2 col-md-3 mb-3 sidebar-scroll" style="height: 75vh; overflow-y: auto;">
     <div class="list-group">
       <button class="list-group-item list-group-item-action text-primary text-center fw-bold" data-bs-toggle="modal" data-bs-target="#newChatModal">
         + Nova Conversa
       </button>
       {% for conv in conversations %}
-        <div class="list-group-item d-flex justify-content-between align-items-center {% if conversation.id == conv.id %}active text-white{% endif %}">
-          <a href="{% url 'chat' conv.id %}" class="{% if conversation.id == conv.id %}text-white{% else %}text-dark{% endif %} text-decoration-none flex-grow-1">
+        <div class="list-group-item d-flex justify-content-between align-items-center {% if conversation and conversation.id == conv.id %}active text-white{% endif %}">
+          <a href="{% url 'chat' conv.id %}" class="{% if conversation and conversation.id == conv.id %}text-white{% else %}text-dark{% endif %} text-decoration-none flex-grow-1">
             {{ conv.title|truncatechars:25 }}
           </a>
           {% if conversation %}
@@ -24,42 +24,51 @@
     </div>
   </div>
 
-  <!-- ÁREA DO CHAT -->
-  <div class="col-lg-9 col-md-9">
-    <div class="card shadow-sm">
-      <div id="chat-box" class="card-body" style="height: 65vh; overflow-y: auto;">
-        {% if messages %}
-          {% for msg in messages %}
-            <div class="mb-3">
-              {% if msg.sender == 'user' %}
-                <div class="text-end">
-                  <span class="badge bg-primary">Você</span>
-                  <div class="alert alert-primary d-inline-block" style="max-width: 75%;">{{ msg.text }}</div>
-                </div>
-              {% else %}
-                <div class="text-start">
-                  <span class="badge bg-success">IA</span>
-                  <div class="alert alert-success d-inline-block" style="max-width: 75%;">{{ msg.text|safe }}</div>
-                </div>
-              {% endif %}
-            </div>
-          {% endfor %}
-        {% else %}
-          <p class="text-muted text-center">Comece a conversar com a IA!</p>
-        {% endif %}
-      </div>
+  {% if conversation %}
+    <!-- ÁREA DO CHAT -->
+    <div class="col-lg-9 col-md-9">
+      <div class="card shadow-sm">
+        <div id="chat-box" class="card-body" style="height: 65vh; overflow-y: auto;">
+          {% if messages %}
+            {% for msg in messages %}
+              <div class="mb-3">
+                {% if msg.sender == 'user' %}
+                  <div class="text-end">
+                    <span class="badge bg-primary">Você</span>
+                    <div class="alert alert-primary d-inline-block" style="max-width: 75%;">{{ msg.text }}</div>
+                  </div>
+                {% else %}
+                  <div class="text-start">
+                    <span class="badge bg-success">IA</span>
+                    <div class="alert alert-success d-inline-block" style="max-width: 75%;">{{ msg.text|safe }}</div>
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-muted text-center">Comece a conversar com a IA!</p>
+          {% endif %}
+        </div>
 
-      <div class="card-footer">
-        <form id="chat-form" method="post">
-          {% csrf_token %}
-          <div class="input-group">
-            <textarea name="user_input" id="chat-input" class="form-control" placeholder="Digite sua mensagem..." rows="1" required></textarea>
-            <button class="btn btn-primary" type="submit">Enviar</button>
-          </div>
-        </form>
+        <div class="card-footer">
+          <form id="chat-form" method="post">
+            {% csrf_token %}
+            <div class="input-group">
+              <textarea name="user_input" id="chat-input" class="form-control" placeholder="Digite sua mensagem..." rows="1" required></textarea>
+              <button class="btn btn-primary" type="submit">Enviar</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
-  </div>
+  {% else %}
+    <!-- MENSAGEM INICIAL QUANDO NÃO HÁ CONVERSAS -->
+    <div class="col-lg-9 col-md-9">
+      <h3 class="text-muted">{{ user.username }}</h3>
+      <p class="lead">Clique em <strong>"Nova Conversa"</strong> na barra lateral para começar a falar com a IA ou selecione uma conversa anterior.</p>
+      <i class="bi bi-chat-dots" style="font-size: 3rem; color: #ccc;"></i>
+    </div>
+  {% endif %}
 </div>
 
 <!-- MODAL: Nova conversa -->
@@ -84,7 +93,6 @@
 
 <!-- MODAL: Renomear e excluir conversa -->
 {% if conversation %}
-<!-- MODAL: Renomear e excluir conversa -->
 <div class="modal fade" id="editChatModal" tabindex="-1" aria-labelledby="editChatModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -116,7 +124,6 @@
 </div>
 {% endif %}
 
-
 <!-- JS -->
 <script>
   window.onload = () => {
@@ -127,7 +134,7 @@
   const chatInput = document.getElementById("chat-input");
   const chatForm = document.getElementById("chat-form");
 
-  chatInput.addEventListener("keydown", function (e) {
+  chatInput?.addEventListener("keydown", function (e) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       chatForm.submit();
