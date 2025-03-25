@@ -1,6 +1,27 @@
 {% extends 'base.html' %}
 {% block title %}Chat com IA{% endblock %}
+  {% block head %}
+  <style>
+  /* Estiliza apenas as tabelas dentro das mensagens da IA */
+  .alert-success table {
+    background-color: white;
+    color: black;
+    border-collapse: collapse;
+    width: 100%;
+  }
 
+  .alert-success table th,
+  .alert-success table td {
+    background-color: white !important;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem;
+  }
+
+  .alert-success table thead {
+    background-color: #f8f9fa !important;
+  }
+</style>
+{% endblock  %}
 {% block content %}
 <div class="row">
   <!-- SIDEBAR -->

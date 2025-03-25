@@ -46,7 +46,14 @@ def chat_view(request, conversation_id=None):
         if user_input and conversation:
             models.Message.objects.create(conversation=conversation, sender='user', text=user_input)
             response = generate_response(user_input, model, collection, embedding_model, request.user.id)
-            response_html = markdown2.markdown(response, extras=["fenced-code-blocks", "code-friendly"])
+            response_html = markdown2.markdown(response, extras=[
+                "fenced-code-blocks",
+                "code-friendly",
+                "tables",
+                "strike",
+                "task_list",
+                "header-ids",
+                "smarty-pants"])
             models.Message.objects.create(conversation=conversation, sender='bot', text=response_html)
 
             # título automático na primeira resposta
