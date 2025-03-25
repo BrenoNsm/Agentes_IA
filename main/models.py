@@ -19,3 +19,11 @@ class Message(models.Model):
     
     def __str__(self):
         return f"{self.sender}: {self.text[:30]}"
+    
+
+class UploadedFile(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="uploads")
+    file = models.FileField(upload_to='uploads/')
+    
+    def __str__(self):
+        return self.file.name

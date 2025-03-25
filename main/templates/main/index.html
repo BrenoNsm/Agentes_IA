@@ -1,27 +1,29 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
+{% load static %}
+{% load humanize %}
 {% block title %}Chat com IA{% endblock %}
-  {% block head %}
-  <style>
-  /* Estiliza apenas as tabelas dentro das mensagens da IA */
+
+{% block head %}
+<style>
   .alert-success table {
     background-color: white;
     color: black;
     border-collapse: collapse;
     width: 100%;
   }
-
   .alert-success table th,
   .alert-success table td {
     background-color: white !important;
     border: 1px solid #dee2e6;
     padding: 0.5rem;
   }
-
   .alert-success table thead {
     background-color: #f8f9fa !important;
   }
 </style>
-{% endblock  %}
+{% endblock %}
+
 {% block content %}
 <div class="row">
   <!-- SIDEBAR -->
@@ -36,9 +38,7 @@
             {{ conv.title|truncatechars:25 }}
           </a>
           {% if conversation %}
-            <button class="btn btn-sm btn-light ms-2" data-bs-toggle="modal" data-bs-target="#editChatModal">
-              ⚙️
-            </button>
+            <button class="btn btn-sm btn-light ms-2" data-bs-toggle="modal" data-bs-target="#editChatModal">⚙️</button>
           {% endif %}
         </div>
       {% endfor %}
@@ -46,49 +46,73 @@
   </div>
 
   {% if conversation %}
-    <!-- ÁREA DO CHAT -->
-    <div class="col-lg-9 col-md-9">
-      <div class="card shadow-sm">
-        <div id="chat-box" class="card-body" style="height: 65vh; overflow-y: auto;">
-          {% if messages %}
-            {% for msg in messages %}
-              <div class="mb-3">
-                {% if msg.sender == 'user' %}
-                  <div class="text-end">
-                    <span class="badge bg-primary">Você</span>
-                    <div class="alert alert-primary d-inline-block" style="max-width: 75%;">{{ msg.text }}</div>
-                  </div>
-                {% else %}
-                  <div class="text-start">
-                    <span class="badge bg-success">IA</span>
-                    <div class="alert alert-success d-inline-block" style="max-width: 75%;">{{ msg.text|safe }}</div>
-                  </div>
-                {% endif %}
-              </div>
-            {% endfor %}
-          {% else %}
-            <p class="text-muted text-center">Comece a conversar com a IA!</p>
-          {% endif %}
-        </div>
-
-        <div class="card-footer">
-          <form id="chat-form" method="post">
-            {% csrf_token %}
-            <div class="input-group">
-              <textarea name="user_input" id="chat-input" class="form-control" placeholder="Digite sua mensagem..." rows="1" required></textarea>
-              <button class="btn btn-primary" type="submit">Enviar</button>
+  <!-- ÁREA DO CHAT -->
+  <div class="col-lg-9 col-md-9">
+    <div class="card shadow-sm">
+      <div id="chat-box" class="card-body" style="height: 65vh; overflow-y: auto;">
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="mb-3">
+              {% if msg.sender == 'user' %}
+                <div class="text-end">
+                  <span class="badge bg-primary">Você</span>
+                  <div class="alert alert-primary d-inline-block" style="max-width: 75%;">{{ msg.text }}</div>
+                </div>
+              {% else %}
+                <div class="text-start">
+                  <span class="badge bg-success">IA</span>
+                  <div class="alert alert-success d-inline-block" style="max-width: 75%;">{{ msg.text|safe }}</div>
+                </div>
+              {% endif %}
             </div>
-          </form>
-        </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted text-center">Comece a conversar com a IA!</p>
+        {% endif %}
+      </div>
+
+      <!-- ARQUIVOS ENVIADOS -->
+      {% if conversation.uploads.all %}
+      <div class="px-3 py-2 border-top">
+        <h6 class="text-muted">📎 Arquivos enviados:</h6>
+        <ul class="list-unstyled mb-0">
+          {% for file in conversation.uploads.all %}
+            <li>
+              <a href="{{ file.file.url }}" target="_blank" class="link-secondary">{{ file.file.name|basename }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- FORMULÁRIOS -->
+      <div class="card-footer">
+        <!-- Formulário de mensagem -->
+        <form id="chat-form" method="post">
+          {% csrf_token %}
+          <div class="input-group">
+            <textarea name="user_input" id="chat-input" class="form-control" placeholder="Digite sua mensagem..." rows="1" required></textarea>
+            <button class="btn btn-primary" type="submit">Enviar</button>
+          </div>
+        </form>
+
+        <!-- Formulário de upload -->
+        <form id="upload-form" method="post" enctype="multipart/form-data" class="mt-2 d-flex align-items-center gap-2">
+          {% csrf_token %}
+          <input type="file" name="uploaded_file" id="fileInput" class="d-none" accept=".pdf,.docx,.odt,.txt" required>
+          <label for="fileInput" class="btn btn-outline-secondary mb-0">📎 Selecionar Arquivo</label>
+          <button class="btn btn-secondary" type="submit" name="upload_file">Enviar</button>
+        </form>
       </div>
     </div>
+  </div>
   {% else %}
-    <!-- MENSAGEM INICIAL QUANDO NÃO HÁ CONVERSAS -->
-    <div class="col-lg-9 col-md-9">
-      <h3 class="text-muted">{{ user.username }}</h3>
-      <p class="lead">Clique em <strong>"Nova Conversa"</strong> na barra lateral para começar a falar com a IA ou selecione uma conversa anterior.</p>
-      <i class="bi bi-chat-dots" style="font-size: 3rem; color: #ccc;"></i>
-    </div>
+  <!-- SEM CONVERSAS -->
+  <div class="col-lg-9 col-md-9 text-center mt-5">
+    <h3 class="text-muted">{{ user.username }}</h3>
+    <p class="lead">Clique em <strong>"Nova Conversa"</strong> na barra lateral para começar a falar com a IA.</p>
+    <i class="bi bi-chat-dots" style="font-size: 3rem; color: #ccc;"></i>
+  </div>
   {% endif %}
 </div>
 
