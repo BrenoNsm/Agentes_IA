@@ -22,12 +22,22 @@ collection = get_or_create_collection(chroma_client)
 
 
 def chat_view(request, conversation_id=None):
-    conversations = models.Conversation.objects.order_by('-created_at')
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    # Carrega só as conversas do usuário logado
+    conversations = models.Conversation.objects.filter(user=request.user).order_by('-created_at')
+
     conversation = None
     messages = []
 
     if conversation_id:
         conversation = get_object_or_404(models.Conversation, id=conversation_id)
+
+        # Bloqueia se a conversa não for do usuário
+        if conversation.user != request.user:
+            return redirect('chat')
+
         messages = conversation.messages.all()
 
     if request.method == "POST":
@@ -54,23 +64,35 @@ def chat_view(request, conversation_id=None):
     })
 
 def new_conversation_view(request):
-    conversation = models.Conversation.objects.create()
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    conversation = models.Conversation.objects.create(user=request.user)
     return redirect('chat', conversation_id=conversation.id)
 
 
-#renomear conversa
+
 @require_POST
 def rename_conversation(request, conversation_id):
     conversation = get_object_or_404(models.Conversation, id=conversation_id)
+
+    if conversation.user != request.user:
+        return redirect('chat')
+
     new_title = request.POST.get("new_title", "").strip()
     if new_title:
         conversation.title = new_title
         conversation.auto_named = False
         conversation.save()
     return redirect('chat', conversation_id=conversation.id)
-#Apagar Conversas
+
+
 @require_POST
 def delete_conversation(request, conversation_id):
     conversation = get_object_or_404(models.Conversation, id=conversation_id)
+
+    if conversation.user != request.user:
+        return redirect('chat')
+
     conversation.delete()
-    return redirect('chat')  # redireciona pra home, mas não cria nova conversa
+    return redirect('chat')
